@@ -1,0 +1,17 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# You have to obtain the SDK from Silixa directly
+# and place it in the following directory
+src/onc_dts/SILDTSSDK.py
+
+site/*
+.env
