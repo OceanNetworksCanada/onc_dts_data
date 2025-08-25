@@ -1,4 +1,3 @@
-from .SILDTSSDK import SILSDK_DTS
 from .utils import read_xt_file, plot_dts_data
 
 
