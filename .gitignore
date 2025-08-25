@@ -15,3 +15,6 @@ src/onc_dts/SILDTSSDK.py
 
 site/*
 .env
+
+output/*
+data/*
