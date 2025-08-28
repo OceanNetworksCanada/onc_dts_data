@@ -10,8 +10,115 @@ from base64 import b64decode
 from typing import Dict, Any, Union, Optional, List, Tuple
 from pathlib import Path
 
-import numpy as np
-import matplotlib.pyplot as plt
+try:
+    import numpy as np
+    import matplotlib.pyplot as plt
+except ImportError as e:
+    print("Required libraries are not installed. Please install numpy and matplotlib.")
+
+def parse_xt_json(json_data: Dict[str, Any], 
+                  file_name: str = "unknown.xt",
+                  channel_points: Dict[int, int] = {1: 2206, 2: 1561},
+                  include_raw: bool = False,
+                  trim: bool = True) -> Dict[str, Any]:
+    """Parse the JSON data from a .xt file and extract key information.
+    
+    This function processes the JSON data structure from a .xt file,
+    extracting metadata, temperature data, and optionally raw signal data.
+    
+    Args:
+        json_data: Parsed JSON data from a .xt file
+        file_name: Name of the source file (for metadata)
+        channel_points: Dictionary mapping channel numbers to the number of points
+                        to extract for that channel
+        include_raw: Whether to include raw signal data in the output
+        trim: Whether to trim the data to only include external points
+        
+    Returns:
+        A dictionary containing:
+            metadata: Dictionary of metadata from the file
+            temp_data: Temperature data array (in Kelvin)
+            distance: Distance array (in meters)
+            raw_data: Raw signal data (if include_raw is True)
+            
+    Raises:
+        KeyError: If required fields are missing from the JSON data
+    """
+    # Extract metadata from the JSON structure
+    metadata = {
+        'channel': json_data['processed data'].get('forward channel', 0) + 1,
+        'dz': json_data['processed data']['resampled temperature data']['dz'],
+        'first_external_point': json_data['processed data']['resampled temperature data']['first external point'],
+        'filename': file_name,
+        'datetime': json_data.get('date time', None),
+    }
+    
+    # Add derived metadata
+    metadata['n_external_points'] = channel_points[metadata['channel']]
+    metadata['external_length'] = metadata['n_external_points'] * metadata['dz']
+    metadata['total_length'] = metadata['external_length'] + metadata['first_external_point'] * metadata['dz']
+    
+    # Extract temperature data (keeping in Kelvin for now)
+    temp_data = np.frombuffer(
+        b64decode(json_data['processed data']['resampled temperature data']['signal']['Data']), 
+        dtype='<f4'
+    )
+    
+    result = {
+        'metadata': metadata,
+        'temp_data': temp_data
+    }
+    
+    # Calculate the distance array based on first external point
+    pt_from = metadata['first_external_point']
+    pt_to = pt_from + channel_points[metadata['channel']]
+    
+    if trim:
+        distance = (np.arange(pt_from, pt_to) - pt_from) * metadata['dz']
+        result['temp_data'] = temp_data[pt_from:pt_to]
+    else:
+        distance = np.arange(0, len(temp_data)) * metadata['dz']
+        
+    result['distance'] = distance
+    
+    # Include raw data if requested
+    if include_raw:
+        raw_data = {}
+        
+        if 'raw_fwd' in result:
+            raw_data['forward'] = result['raw_fwd']
+            
+        if 'raw_rev' in result:
+            raw_data['reverse'] = result['raw_rev']
+            
+        if raw_data:  # Only add if we have data
+            result['raw_data'] = raw_data
+    
+    # Extract raw forward data if available
+    if 'resampled forward raw data' in json_data['processed data']:
+        raw_fwd = np.frombuffer(
+            b64decode(json_data['processed data']['resampled forward raw data']['signal']['Data']), 
+            dtype='<f4'
+        )
+        # Reshape if necessary - typically for multi-channel data
+        if len(raw_fwd) > len(temp_data):
+            # Determine number of channels from the JSON or use default of 2
+            channels = json_data['processed data'].get('number of channels', 2)
+            raw_fwd = raw_fwd.reshape(channels, -1)
+        result['raw_fwd'] = raw_fwd
+    
+    # Extract raw reverse data if available
+    if 'resampled reverse raw data' in json_data['processed data']:
+        raw_rev = np.frombuffer(
+            b64decode(json_data['processed data']['resampled reverse raw data']['signal']['Data']), 
+            dtype='<f4'
+        )
+        # Reshape if necessary based on forward data
+        if 'raw_fwd' in result and len(raw_rev) > len(temp_data):
+            raw_rev = raw_rev.reshape(result['raw_fwd'].shape[0], -1)
+        result['raw_rev'] = raw_rev
+    
+    return result
 
 
 def read_xt_file(file_path: Union[str, Path], 
@@ -26,6 +133,7 @@ def read_xt_file(file_path: Union[str, Path],
     Args:
         file_path: Path to the .xt file as string or Path object
         include_raw: Whether to include raw signal data in the output
+        trim: Whether to trim the data to only include external points
         channel_points: Dictionary mapping channel numbers to the number of points
                         to extract for that channel
         
@@ -47,72 +155,13 @@ def read_xt_file(file_path: Union[str, Path],
     with open(file_path, 'r') as f:
         json_data = json.load(f)
     
-    out = {}
-    # Extract metadata from the JSON file
-    metadata = {
-        'channel': json_data['processed data'].get('forward channel', 0) + 1,
-        'dz': json_data['processed data']['resampled temperature data']['dz'],
-        'first_external_point': json_data['processed data']['resampled temperature data']['first external point'],
-        'filename': file_path.name,
-        'datetime': json_data.get('date time', None),
-    }
-    metadata['n_external_points'] = channel_points[metadata['channel']]
-    metadata['external_length'] = metadata['n_external_points'] * metadata['dz']
-    metadata['total_length'] = metadata['external_length'] + metadata['first_external_point'] * metadata['dz']
-    out['metadata'] = metadata
+    # Parse the JSON data to extract metadata and arrays
+    parsed_data = parse_xt_json(json_data, file_path.name, channel_points, include_raw, trim)
     
+    # Convert temperature from Kelvin to Celsius
+    parsed_data['temp_data'] = parsed_data['temp_data'] - 273.15
     
-    # Extract temperature data and convert from Kelvin to Celsius
-    temp_data = np.frombuffer(
-        b64decode(json_data['processed data']['resampled temperature data']['signal']['Data']), 
-        dtype='<f4'
-    ) - 273.15  # Convert from K to °C
-    
-    # Calculate the distance array based on first external point
-    pt_from = metadata['first_external_point']
-    pt_to = pt_from + channel_points[metadata['channel']]
-    
-    if trim:
-        distance = (np.arange(pt_from, pt_to) - pt_from) * metadata['dz']
-        out['temp_data'] = temp_data[pt_from:pt_to]
-    else:
-        distance = np.arange(0, len(temp_data)) * metadata['dz']
-        out['temp_data'] = temp_data
-        
-    out['distance'] = distance
-    
-    if include_raw:
-        # Extract raw data if available
-        raw_data: Dict[str, np.ndarray] = {}
-        
-        # Process forward raw data if present
-        if 'resampled forward raw data' in json_data['processed data']:
-            raw_fwd = np.frombuffer(
-                b64decode(json_data['processed data']['resampled forward raw data']['signal']['Data']), 
-                dtype='<f4'
-            )
-            # Reshape if necessary - typically for multi-channel data
-            if len(raw_fwd) > len(temp_data):
-                # Determine number of channels from the JSON or use default of 2
-                channels = json_data['processed data'].get('number of channels', 2)
-                raw_fwd = raw_fwd.reshape(channels, -1)
-            raw_data['forward'] = raw_fwd
-        
-        # Process reverse raw data if present    
-        if 'resampled reverse raw data' in json_data['processed data']:
-            raw_rev = np.frombuffer(
-                b64decode(json_data['processed data']['resampled reverse raw data']['signal']['Data']), 
-                dtype='<f4'
-            )
-            # Reshape if necessary and maintain consistent shape with forward data
-            if len(raw_rev) > len(distance) and 'forward' in raw_data:
-                raw_rev = raw_rev.reshape(raw_data['forward'].shape[0], -1)
-            raw_data['reverse'] = raw_rev
-        out['raw_data'] = raw_data    
-        
-    # Return structured dictionary with all extracted information
-    return out
-
+    return parsed_data
 
 def plot_dts_data(file_data: Dict[str, Any], 
                   include_raw: bool = False, 
