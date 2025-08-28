@@ -10,7 +10,8 @@ working_dir = os.getcwd()
 print(f"Working directory: {working_dir}")
 
 if not ONC_API_TOKEN:
-    raise EnvironmentError("ONC_API_TOKEN not found in environment variables.")
+    # raise EnvironmentError("ONC_API_TOKEN not found in environment variables.")
+    print(f"Warning: ONC_API_TOKEN not found in environment variables. {ONC_API_TOKEN}")
 
 def main() -> None:
     print("Monitoring DTS...")
