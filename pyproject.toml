@@ -1,0 +1,35 @@
+[project]
+name = "onc-dts"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Martin Heesemann", email = "mheesema@uvic.ca" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "python-dotenv>=1.1.1",
+    "requests>=2.32.3",
+]
+
+[project.scripts]
+onc-dts = "onc_dts:main"
+monitor_dts = "onc_dts.monitor_dts:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+notebook = [
+    "ipykernel>=6.29.5",
+    "matplotlib>=3.10.1",
+    "pandas>=2.2.3",
+    "xarray>=2025.3.1",
+]
+dev = [
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.6.12",
+    "mkdocstrings>=0.29.1",
+    "mkdocstrings-python>=1.16.10",
+]
