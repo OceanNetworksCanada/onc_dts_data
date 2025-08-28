@@ -1,4 +1,13 @@
 import argparse
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+ONC_API_TOKEN = os.getenv("ONC_API_TOKEN")
+
+if not ONC_API_TOKEN:
+    raise EnvironmentError("ONC_API_TOKEN not found in environment variables.")
 
 def main() -> None:
     print("Monitoring DTS...")
