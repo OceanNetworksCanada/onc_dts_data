@@ -6,11 +6,11 @@ load_dotenv()
 
 ONC_API_TOKEN = os.getenv("ONC_API_TOKEN")
 
-if not ONC_API_TOKEN:
-    raise EnvironmentError("ONC_API_TOKEN not found in environment variables.")
-
 working_dir = os.getcwd()
 print(f"Working directory: {working_dir}")
+
+if not ONC_API_TOKEN:
+    raise EnvironmentError("ONC_API_TOKEN not found in environment variables.")
 
 def main() -> None:
     print("Monitoring DTS...")
