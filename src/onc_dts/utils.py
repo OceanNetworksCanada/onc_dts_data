@@ -17,7 +17,6 @@ import matplotlib.pyplot as plt
 def read_xt_file(file_path: Union[str, Path], 
                  include_raw: bool = False,
                  trim: bool = True, 
-                 json: bool = True,
                  channel_points: Dict[int, int] = {1: 2206, 2: 1561}) -> Dict[str, Any]:
     """Reads and parses a .xt file, extracting temperature data and metadata.
     
@@ -27,8 +26,6 @@ def read_xt_file(file_path: Union[str, Path],
     Args:
         file_path: Path to the .xt file as string or Path object
         include_raw: Whether to include raw signal data in the output
-        json: This switches between JSON formatted ONC files and JSON xt files downloaded
-              directly from the instrument.
         channel_points: Dictionary mapping channel numbers to the number of points
                         to extract for that channel
         
@@ -51,7 +48,7 @@ def read_xt_file(file_path: Union[str, Path],
         json_data = json.load(f)
     
     # Determine if ONC JSON formatted or instrument downloaded JSON
-    if json:
+    if "Resp" in json_data:
         json_data = json_data['Resp']
 
     out = {}
