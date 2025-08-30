@@ -155,6 +155,10 @@ def read_xt_file(file_path: Union[str, Path],
     with open(file_path, 'r') as f:
         json_data = json.load(f)
     
+    # Determine if ONC JSON formatted or instrument downloaded JSON
+    if "Resp" in json_data:
+        json_data = json_data['Resp']
+
     # Parse the JSON data to extract metadata and arrays
     parsed_data = parse_xt_json(json_data, file_path.name, channel_points, include_raw, trim)
     
