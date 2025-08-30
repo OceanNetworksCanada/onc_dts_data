@@ -47,6 +47,10 @@ def read_xt_file(file_path: Union[str, Path],
     with open(file_path, 'r') as f:
         json_data = json.load(f)
     
+    # Determine if ONC JSON formatted or instrument downloaded JSON
+    if "Resp" in json_data:
+        json_data = json_data['Resp']
+
     out = {}
     # Extract metadata from the JSON file
     metadata = {
