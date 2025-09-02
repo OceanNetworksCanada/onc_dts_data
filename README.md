@@ -33,6 +33,15 @@ This project uses `uv` for dependency management and script execution. If you do
 
 This ensures your system Python remains clean and prevents dependency conflicts.
 
+### Obtain your ONC API token
+A unique Oceans 3.0 API token is required to access ONCs data. To obtain a token, follow the steps below:
+1. Register for an Oceans 3.0 account at https://data.oceannetworks.ca/Registration.
+2. Log into your account at https://data.oceannetworks.ca by clicking the Log In link.
+3. Click the Profile link (top right corner) to access your account profile.
+4. Access the Web Services API tab and click Copy Token.
+If you forget your token, you can always find it again in your Oceans 3.0 account profile.
+You can store your token in a .env file in the same directory as ONC_API_TOKEN = ''.
+
 ### Running the DTS Monitoring Script
 
 The monitoring script can be executed directly from the GitHub repository without needing to clone or install the package locally:
