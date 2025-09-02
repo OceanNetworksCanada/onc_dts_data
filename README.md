@@ -39,6 +39,7 @@ A unique Oceans 3.0 API token is required to access ONCs data. To obtain a token
 2. Log into your account at https://data.oceannetworks.ca by clicking the Log In link.
 3. Click the Profile link (top right corner) to access your account profile.
 4. Access the Web Services API tab and click Copy Token.
+   
 If you forget your token, you can always find it again in your Oceans 3.0 account profile.
 You can store your token in a .env file in the same directory as ONC_API_TOKEN = ''.
 
