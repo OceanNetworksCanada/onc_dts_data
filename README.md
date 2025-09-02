@@ -7,7 +7,8 @@ A Python library for plotting data retrieved from Silixa Distributed Temperature
 ## Content
 This repository contains code and jupyter notebook tutorial on data acquisiton, processing, and plotting of the distributed temperature sensor (DTS) which is owned by University of Rhode Island research group (see PhD thesis of Johann Becker: https://digitalcommons.uri.edu/oa_diss/4440/)
 
-The notebooks can be found here: https://github.com/OceanNetworksCanada/onc_dts_data/tree/main/notebooks 
+The jupyter notebooks on how to access data in ONCs database and processing can be found here: https://github.com/OceanNetworksCanada/onc_dts_data/tree/main/notebooks 
+
 The below instructions are for monitoring real-time data coming into Oceannetworks.ca:
 
 ## Running the Monitoring Script
